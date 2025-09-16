@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+  <!-- p5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+  <!-- Matter.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+</head>
+<body>
+<script>
+const { Engine, World, Bodies, Body, Runner } = Matter;
+
+let engine, world;
+let bgImg;
+let letterImgs = [];
+let names = ["s.png","p.png","a.png","r.png","k.png","c.png","o.png","o2.png","l.png"];
+
+let letters = [];
+let currentIndex = 0;
+let maxLetters = 2000; // shu
+
+function preload() {
+  bgImg = loadImage("头.png");
+  for (let n of names) {
+    letterImgs.push(loadImage(n));
+  }
+}
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  imageMode(CENTER);
+
+  engine = Engine.create();
+  world = engine.world;
+  world.gravity.y = 0; // wuzhongli
+
+  Runner.run(engine);
+}
+
+function draw() {
+  background(255);
+  image(bgImg, width/2, height/2, width, height);
+
+  // 隔帧
+  if(frameCount % 2 === 0 && letters.length < maxLetters){
+    addLetter(letterImgs[currentIndex]);
+    currentIndex = (currentIndex + 1) % letterImgs.length;
+  }
+
+  for(let l of letters){
+    // 微抖动
+    Body.applyForce(l.body, l.body.position, {x: random(-0.0005,0.0005), y: random(-0.0005,0.0005)});
+
+    // 随机炸开效果
+    if(random() < 0.01){
+      let fx = random(-0.01,0.01);
+      let fy = random(-0.01,0.01);
+      Body.applyForce(l.body, l.body.position, {x: fx, y: fy});
+    }
+
+    // 绘制字母
+    push();
+    translate(l.body.position.x, l.body.position.y);
+    rotate(l.body.angle);
+    image(l.img, 0, 0, l.w, l.h);
+    pop();
+  }
+}
+
+// 创建一个字母刚体
+function addLetter(img){
+  let scale = random(0.05,0.12);
+  let w = img.width * scale;
+  let h = img.height * scale;
+
+  // 随机位置
+  let x = random(w/2, width - w/2);
+  let y = random(h/2, height - h/2);
+
+  let body = Bodies.rectangle(x, y, w, h, {
+    restitution: 0.8,
+    friction: 0.1,
+    frictionAir: 0.02 // 阻尼，让炸开后慢慢回到静止
+  });
+
+  World.add(world, body);
+
+  letters.push({
+    img: img,
+    body: body,
+    w: w,
+    h: h
+  });
+}
+</script>
+</body>
+</html>
